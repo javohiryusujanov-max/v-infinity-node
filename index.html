@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>V-INFINITY ORACLE V44</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <style>
+        :root { --neon-green: #00ff41; --neon-purple: #bc13fe; --bg-dark: #0a0a0a; --panel-bg: #1a1a1a; }
+        body { background: var(--bg-dark); color: white; font-family: 'Courier New', monospace; margin: 0; padding: 15px; overflow-x: hidden; }
+        .header { border-bottom: 2px solid var(--neon-green); padding-bottom: 10px; margin-bottom: 20px; text-align: center; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .card { background: var(--panel-bg); border: 1px solid #333; padding: 15px; border-radius: 8px; text-align: center; }
+        .card h3 { margin: 0; font-size: 0.8rem; color: #888; text-transform: uppercase; }
+        .card div { font-size: 1.5rem; font-weight: bold; margin-top: 5px; color: var(--neon-green); }
+        .bingo-card { grid-column: span 2; border: 1px solid var(--neon-purple); }
+        .bingo-card div { color: var(--neon-purple); }
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex: 1; background: #222; border: 1px solid #444; color: white; padding: 15px; font-size: 1.2rem; border-radius: 5px; outline: none; }
+        button { background: var(--neon-green); color: black; border: none; padding: 15px 25px; font-weight: bold; border-radius: 5px; cursor: pointer; }
+        .history { background: #111; padding: 10px; border-radius: 5px; font-size: 0.9rem; min-height: 50px; word-break: break-all; }
+        .status-bar { font-size: 0.7rem; color: #666; margin-top: 10px; display: flex; justify-content: space-between; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <span style="font-size: 1.2rem; font-weight: bold;">V-INFINITY SINGULARITY</span><br>
+        <span style="font-size: 0.7rem; color: var(--neon-green);">EINSTEIN QUANT NODE V44</span>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3>🛡️ SHIELD (95%)</h3>
+            <div id="shield-val">--</div>
+        </div>
+        <div class="card">
+            <h3>🔱 SPEAR (70%)</h3>
+            <div id="spear-val">--</div>
+        </div>
+        <div class="card bingo-card">
+            <h3>🎯 BINGO HUNTER (GAP: <span id="gap-val">0</span>r)</h3>
+            <div id="bingo-val">WAITING...</div>
+            <div id="ripeness-bar" style="font-size: 0.8rem; color: #888; margin-top: 5px;">RIPENESS: 0%</div>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <input type="number" id="multiplier-input" step="0.01" placeholder="Enter last crash..." inputmode="decimal">
+        <button onclick="addRound()">ADD</button>
+    </div>
+
+    <div class="card" style="text-align: left;">
+        <h3 style="margin-bottom: 10px;">🧬 MOLECULAR HISTORY</h3>
+        <div class="history" id="history-display">INGESTING DATA (NEED 3 ROUNDS)...</div>
+        <button onclick="clearData()" style="background:#444; color:white; padding:5px 10px; font-size:0.6rem; margin-top:10px;">RESET DATABASE</button>
+    </div>
+
+    <div class="status-bar">
+        <span>STATE: <span id="state-val" style="color:var(--neon-green)">SYNCING</span></span>
+        <span>RTP_LOC: <span id="rtp-val">--</span></span>
+    </div>
+
+    <script>
+        let history = JSON.parse(localStorage.getItem('aviator_history') || '[]');
+        const RTP_CONSTANT = 0.97;
+
+        function addRound() {
+            const input = document.getElementById('multiplier-input');
+            const val = parseFloat(input.value);
+            if (!isNaN(val) && val >= 1.0) {
+                history.unshift(val);
+                if (history.length > 200) history.pop();
+                localStorage.setItem('aviator_history', JSON.stringify(history));
+                input.value = '';
+                calculate();
+            }
+        }
+
+        function clearData() {
+            if(confirm("Wipe Database?")) {
+                history = [];
+                localStorage.removeItem('aviator_history');
+                location.reload();
+            }
+        }
+
+        function calculate() {
+            if (history.length < 3) return;
+
+            const n = Math.min(history.length, 25);
+            const recent = history.slice(0, n);
+            const avg = math.mean(recent);
+            const stdDev = math.std(recent);
+            const entropy = recent.filter(v => v < 1.35).length / n;
+
+            // 1. DYNAMIC SHIELD (Einstein 95% Confidence)
+            const localR = 0.97 + (entropy * 0.05);
+            let shield = localR / 0.95;
+            if (shield > 1.30) shield = 1.25;
+
+            // 2. DYNAMIC SPEAR (Einstein 70% Confidence)
+            let spear = (localR / 0.70) * (entropy > 0.5 ? 1.15 : 1.0);
+            spear = Math.min(spear, avg + (stdDev * 0.6));
+
+            // 3. BINGO HUNTER (Poisson Gap Analysis)
+            const lastBingo = history.findIndex(v => v >= 100);
+            const gap = lastBingo === -1 ? history.length : lastBingo;
+            const ripeness = Math.min(100, (gap / 120) * 100);
+
+            // UI UPDATES
+            document.getElementById('shield-val').innerText = shield.toFixed(2) + 'x';
+            document.getElementById('spear-val').innerText = spear.toFixed(2) + 'x';
+            document.getElementById('gap-val').innerText = gap;
+            document.getElementById('ripeness-bar').innerText = `RIPENESS: ${ripeness.toFixed(1)}%`;
+            
+            if (ripeness > 85) {
+                document.getElementById('bingo-val').innerText = "🔥 READY TO HIT";
+                document.querySelector('.bingo-card').style.background = "#300";
+            } else {
+                document.getElementById('bingo-val').innerText = "WAITING...";
+                document.querySelector('.bingo-card').style.background = "#1a1a1a";
+            }
+
+            document.getElementById('history-display').innerText = history.slice(0, 12).join(' | ');
+            document.getElementById('rtp-val').innerText = (localR * 100).toFixed(1) + '%';
+            document.getElementById('state-val').innerText = entropy > 0.5 ? 'RECOVERY' : 'STABLE';
+            document.getElementById('state-val').style.color = entropy > 0.5 ? 'orange' : '#00ff41';
+        }
+
+        // Initial Calculation on load
+        if (history.length >= 3) calculate();
+        
+        // Handle Enter key
+        document.getElementById('multiplier-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addRound();
+        });
+    </script>
+</body>
+</html>
